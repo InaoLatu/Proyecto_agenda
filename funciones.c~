@@ -1,0 +1,423 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <ctype.h>
+
+
+struct Tarea {
+  char tipo[50];
+  int identificador;
+  char descripcion[100];
+  char propietario[30];
+  int prioridad;
+  char estado[20];
+  char plazo[100];
+  char dependencias[1000];
+  struct Tarea *prox; 
+};
+typedef struct Tarea Tarea;
+
+
+/* struct tm { */
+
+/*  int tm_sec;   // Segundos pasados del minuto (0-61) */
+
+/*  int tm_min;   // Minutos pasados de la hora (0-59) */
+
+/*  int tm_hour;  // Horas desde medianoche (0-23) */
+
+/*  int tm_mday;  // Dia del mes (1-31) */
+
+/*  int tm_mon;   // Número del mes (0-11) */
+
+/*  int tm_year;  // Años transcurridos desde 1900 */
+
+/*  int tm_wday;  // Dia de semana (0-6; Domingo = 0) */
+
+/*  int tm_yday;  // Dia del año (0-365) */
+
+/*  int tm_isdst; /\* Adelanto de hora para horario de verano */
+
+/*                    1=Si; 0=No; -1=Indefinido *\/ */
+
+/* }; */
+typedef struct tm Tm;
+
+char *portada ();                                                //DECLARACION DE FUNCIONES 
+Tarea *crear_tarea();
+Tarea *cargar_tareas();
+int guardar_tareas();
+int ver_tarea();
+int  comprobar_fecha();
+void sleep();
+int dependencias_dir();
+int contador_dias();
+int  identificadores();
+
+
+
+char *portada() {  //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  int i,z;
+  char *iden;
+  iden=(char*)malloc(20*sizeof(int));
+  
+  for (i=0;i<2;i++) {
+    for (z=0;z<80;z++){
+      printf("*");
+    }
+    printf("\n");
+  }  
+  for (i=0 ;i<22;i++) {
+    printf("*");
+  }
+  printf("\tGESTOR DE TAREAS DE UNA AGENDA\t");
+  for (i=0 ;i<24;i++) {
+    printf("*");
+  }
+   printf("\n");
+   for (i=0;i<2;i++) {
+     for (z=0;z<80;z++){
+       printf("*");
+     }
+     printf("\n");
+   } 
+   printf("Introduzca su identificador: ");
+   fgets(iden,50,stdin);
+   printf("\n");    
+   printf("AGENDA\n");
+   printf(" 1) Crear tarea\n 2) Ver tarea\n 3) Ver lista de tareas\n 0) Salir del programa\n ¿SIGUIENTE OPERACION?\n");  
+   free(iden);                                                                //libere memoria creada 
+   return iden;
+}
+
+
+Tarea *crear_tarea(char *iden) {   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  Tarea *nuevatarea,*aux;
+  int i,u,c,f=0,q=0;
+  nuevatarea=malloc(sizeof(Tarea));    //Reservamos memoria 
+  aux=cargar_tareas();
+  
+  printf("Introducir los datos de la nueva tarea:\n");
+  do {
+    c=0;
+    printf("Introducir el tipo de la tarea: ");
+    fgets(nuevatarea->tipo,50,stdin);  
+    if (strcmp(nuevatarea->tipo,"con plazo\n")==0) {
+      f=comprobar_fecha(nuevatarea);                                                  //meto comprobar_fecha 
+    }
+    else if(strcmp(nuevatarea->tipo,"simple\n")==0) {
+      strcpy(nuevatarea->plazo,"-\n"); }
+    else {printf("OPCION INCORRECTA\n"); c=1;}
+  } while (c==1);
+  
+  strcpy(nuevatarea->propietario,iden);
+  printf("Introduzca la descripcion: ");
+  fgets(nuevatarea->descripcion,100,stdin); 
+  do {
+    u=0;
+    printf("Introduzca la prioridad(1-10): ");
+    scanf(" %i",&nuevatarea->prioridad);
+    fgetc(stdin);
+    if ( nuevatarea->prioridad<1 || nuevatarea->prioridad >10) {                    //Comprobacion de que la prioridad introucida
+      printf("OPCION INCORRECTA.Introducir una prioridad entre 1 y 10\n"); u=1; }   // es correcta. 
+  }  while (u==1);                                                                        
+  
+  printf("Introduzca las dependencias(0 si no hay ninguna): ");
+  fgets(nuevatarea->dependencias,1000,stdin);  
+  if (strcmp(nuevatarea->dependencias,"0\n")==0) {
+    strcpy(nuevatarea->dependencias,"-\n");
+  }
+  else { q=dependencias_dir(aux,nuevatarea);   }  
+  
+  while (aux != NULL) {    
+    if(strcmp(aux->propietario,iden)==0 && strcmp(aux->descripcion,nuevatarea->descripcion)==0) {
+      printf("AVISO: Tarea ya existente\n");
+      printf("Pulsar ENTER para volver al menu principal ");
+      getchar();
+      nuevatarea=NULL;
+      return nuevatarea;
+    }
+    aux=aux->prox;
+  }
+  printf("\n");
+  if (f==1) { printf("AVISO: La fecha debe ser posterior a la actual\n");
+    nuevatarea=NULL;
+    printf("Pulse ENTER para volver al menu principal del programa");
+    getchar(); 
+  }
+  else if (q==1) { 
+    nuevatarea=NULL;
+    printf("AVISO: Algunas de las dependencias indicadas es incorrecta\n");
+    printf("Pulse ENTER para volver al menu principal del programa ");
+    getchar();
+  }
+
+ i=identificadores();
+ nuevatarea->identificador=i;
+
+
+  free(nuevatarea);
+  return nuevatarea; 
+}
+
+Tarea *cargar_tareas() {    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  FILE *f;
+  Tarea *aux,*inicio;  
+  f=fopen("tareas.txt", "r");
+  aux=malloc(sizeof(Tarea));
+  inicio=aux;
+  
+  while (feof(f)==0) {
+    fgets(aux->tipo,20,f);
+    fscanf(f,"%i",&aux->identificador);
+    fgetc(f);
+    fgets(aux->descripcion,100,f);
+    fgets(aux->propietario,50,f);
+    fscanf(f,"%i",&aux->prioridad);
+    fgetc(f);
+    fgets(aux->estado,15,f);
+    fgets(aux->plazo,100,f);
+    fgets(aux->dependencias,1000,f);
+    fgetc(f);
+    fgetc(f);
+    /* printf("\n"); */
+    /* printf("%s",aux->tipo); */
+    /* printf("%i\n",aux->identificador); */
+    /* printf("%s",aux->descripcion); */
+    /* printf("%s",aux->propietario); */
+    /* printf("%i\n",aux->prioridad); */
+    /* printf("%s",aux->estado); */
+    /* printf("%s",aux->plazo); */
+    /* printf("%s",aux->dependencias); */
+
+    if(feof(f)==0) {
+      (aux->prox)=malloc(sizeof(Tarea));
+      aux=aux->prox;
+    }    
+  }
+  fclose(f);
+  return inicio;
+}
+
+int guardar_tarea(Tarea *nuevatarea) {  //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  FILE *f;
+  f=fopen ("tareas.txt","a");
+  fprintf(f,"*\n");
+  fprintf(f,"%s",nuevatarea->tipo);
+  fprintf(f,"%i\n",nuevatarea->identificador);
+  fprintf(f,"%s",nuevatarea->descripcion);
+  fprintf(f,"%s",nuevatarea->propietario);
+  fprintf(f,"%i\n",nuevatarea->prioridad);
+  fprintf(f,"%s",nuevatarea->plazo);
+  fprintf(f,"%s",nuevatarea->dependencias);
+  fclose(f);                                       //Cerramos fichero 
+  return 0;
+}
+
+
+int ver_tarea (Tarea *inicio, char *idenusu) { //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  int identarea;
+  Tarea *aux;
+  int c=0,n;
+  printf("Introducir identificador de la tarea: ");
+  scanf(" %i",&identarea);
+  fgetc(stdin);
+  aux=inicio; 
+  
+  while(aux != NULL) {
+    if (aux->identificador==identarea) {
+      c=1;
+      if(strcmp(aux->propietario,idenusu)==0) {
+	printf("Descripcion: %s",aux->descripcion);
+	printf("Prioridad: %i\n",aux->prioridad);
+	printf("Estado: %s",aux->estado);
+      printf("Tipo: %s",aux->tipo);
+      if(strcmp(aux->tipo,"con_plazo\n")==0) {
+	printf("Plazo: %s",aux->plazo);
+	
+	if(strcmp(aux->estado,"pendiente\n")==0) {
+	  n=contador_dias(aux);
+	  if (n>0) { printf("Dias para terminar la tarea: %i\n",n); }
+	  if (n==0) { printf("Dias para terminar la tarea: %i(Quedan menos de 24h)\n",n); }
+	  
+	}
+      }   
+      printf("Tareas de las que depende la tarea:\n");
+      printf("Directamente:\n");
+      printf("Indirectamente:\n");
+      printf("Tareas dependientes de la propia tarea: %s",aux->dependencias);
+      break;
+      }
+      else { printf("AVISO: Operacion no permtida sobre esta tarea\n"); break;  }
+    }
+    aux=aux->prox;
+  }
+  if (c==0) { printf("AVISO: Tarea no existente\n"); }
+  printf("PULSA ENTER para volver al menu principal ");
+  getchar();
+  return 0;
+}
+
+
+int comprobar_fecha(Tarea *aux) {  //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  
+  char *p;
+  int d,m,a,h,min,x=0,f=0;
+  time_t horaordenador,horaintroducida;
+  Tm *plazo=NULL;
+  double diferencia;
+  
+  p=(char*)malloc(sizeof(char));
+  aux=malloc(sizeof(Tarea)); 
+  do {
+    if(x==1) {printf("Fecha incorrecta\n"); }
+    x=0;
+    printf("Introducir un plazo: ");
+    scanf("%s",aux->plazo);
+    fgetc(stdin);
+    strcpy(p,aux->plazo);   
+    d=atoi(p);                              //Dia del mes                             
+    p=p+3;
+    m=atoi(p);                              // mes
+    p=p+3;                                  
+    a=atoi(p);                              // año
+    p=p+5;
+    h=atoi(p);                              // hora 
+    p=p+3;
+    min=atoi(p);                            // minutos 
+                                
+    if (m==1 || m==3 || m==5 || m==7 || m==8 || m==10 || m==12 ) {           // Meses con 31 dias 
+      if (d < 1 || d > 31) { x=1; }
+    }
+    
+    if ( m==4 || m==6 || m==9 || m==11) { if (d<1 || d>30) { x=1; }         //Meses con 30 dias 
+    }
+    
+    if (m==2) { if(a%4==0) { if (d<1 || d>29) { x=1;}          }            //Febrero dependiendo de si el año es bisiesto o no
+      else if (d<1 || d>28) {x=1;}               
+    }
+    if(m<1 || m>12) { x=1; }
+  } while (x == 1);
+  
+  plazo=malloc(sizeof(Tm));              //Reservamos memoria para el struct tm donde se incluiran los datos del plazo introducido
+  plazo->tm_mday=d;
+  m=m-1;
+  plazo->tm_mon=m;
+  a=a-1900;                                 //Restamos 1900 porque en los strutc tm se cuentan los años a partir de 1900
+  plazo->tm_year=a;
+  plazo->tm_hour=h;
+  plazo->tm_min=min;
+  horaintroducida=mktime(plazo);               //segundos transcurridos hasta el plazo introducido
+
+  /* printf("Los segundos que pasaron son %li\n",horaintroducida); */
+  horaordenador=time(NULL);                                 // Hora del ordenador en time_t 
+  /* fechaordenador=localtime(&horaordenador); */         // Hora del ordenador con un puntero *Tm apuntando a una estructura de ese tipo                                                                             //  con los datos
+  /* imprim=asctime(fechaordenador);                  // Conversion del Tm a una cadena de caracteres con la fecha y hora  */
+  /* printf("Fecha y hora del sistema: %s\n",imprim); */
+  diferencia=difftime(horaintroducida,horaordenador); //diferencia entre la fecha actual y el plazo introducido
+  diferencia=diferencia-604800;                     //6048000 s son los que hay en 7 dias, que es la minima diferencia que tiene que existir
+  if(diferencia<0) {f=1;}
+  free(plazo);
+  free(p);
+  return f; 
+}
+
+
+void probando() {            //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  
+  time_t first,second;
+  double tiempo;
+  first=time(NULL);
+  sleep(2000);
+  second=time(NULL);
+  tiempo=difftime(second,first);
+  printf("%f",tiempo); 
+  return ;
+}
+
+int dependencias_dir(Tarea *inicio, Tarea *nuevatarea) {  //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  
+  Tarea *aux;
+  char *p;
+  int d,a=0,q=0;
+  
+  p=nuevatarea->dependencias;
+  
+  while (*p != '\0') {
+    aux=inicio;
+    d=atoi(p);
+    a=0;
+    while(aux != NULL) {
+      if(aux->identificador==d) {
+	a=1;
+	break; 
+      }
+      else { aux=aux->prox; }      
+    }
+    if (a==0) { 
+      q=1; break;
+    }
+    p=p+2;  
+  }   
+  return q;   
+}
+
+
+int contador_dias(Tarea *aux) {  //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+
+  char *p;
+  int d,m,a,h,min,n=0;
+  time_t horaordenador,horaintroducida;
+  Tm *plazo=NULL; 
+  double diferencia;
+  
+ p=(char*)malloc(sizeof(char));
+ strcpy(p,aux->plazo);   
+    d=atoi(p);
+    printf("dia %i",d);                              //Dia del mes                             
+    p=p+3;
+    m=atoi(p);                              // mes
+    p=p+3;                                  
+    a=atoi(p);                            // año
+    p=p+5;
+    h=atoi(p);                               //hora
+    p=p+3;
+    min=atoi(p);                            //minutos 
+    
+  plazo=malloc(sizeof(Tm));              //Reservamos memoria para el struct tm donde se incluiran los datos del plazo introducido
+  plazo->tm_mday=d;
+  m=m-1;
+  plazo->tm_mon=m;
+  a=a-1900;                                 //Restamos 1900 porque en los strutc tm se cuentan los años a partir de 1900
+  plazo->tm_year=a;
+  plazo->tm_hour=h;
+  plazo->tm_min=min;
+  horaintroducida=mktime(plazo);
+  horaordenador=time(NULL);                                 // Hora del ordenador en time_t 
+  diferencia=difftime(horaintroducida,horaordenador);
+  do {
+    diferencia=diferencia-86400;                             //Restamos los segundos que hay en 1 dia (86400) 
+    if(diferencia>0) { n++; } 
+  } while(diferencia>0);
+  free(plazo);
+  return n;  
+ }
+
+int  identificadores () {        //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX//
+  int i,c;
+  Tarea *inicio,*aux;
+
+    inicio=cargar_tareas();    
+  do {
+    c=0;
+    aux=inicio;
+    i= 1+rand();                                      //Creamos un numero entero aleatorio
+    while (aux !=NULL) {
+      if (i==aux->identificador) { c=1; break; }    //Lo vamos comparando con los identificadores del resto de tareas  
+      aux=aux->prox;
+    }
+  } while (c==1);
+  return i;
+}
+

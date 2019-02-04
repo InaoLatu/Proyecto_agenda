@@ -1,0 +1,35 @@
+con plazo
+1
+comprar estanterias
+pedro_pazos
+4
+pendiente
+07/10/2015 20:30
+-
+*
+simple
+2
+limpiar el garaje
+amigos
+7
+terminada
+-
+-
+*
+con_plazo
+4
+pintar el garaje
+jose_lopez
+7
+terminada
+07/09/2014 00:00
+2
+*
+simple
+5
+poner estanterias en el garaje
+socios
+8
+pendiente
+-
+1,4

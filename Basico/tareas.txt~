@@ -1,0 +1,126 @@
+con_plazo
+5
+Ampliar el garaje
+pedro_pazos
+9
+pendiente
+28/02/2024:20:00
+7,8,9
+*
+simple
+7
+Obtener licencia municipal
+pedro_pazos
+3
+pendiente
+-
+13
+*
+simple
+13
+Estar pendiente exposición pública Plan Parcial de Ordenación Municipal
+pedro_pazos
+3
+pendiente
+-
+-
+*
+simple
+8
+Obtener recursos monetarios
+pedro_pazos
+3
+pendiente
+-
+10
+*
+con_plazo
+10
+Lograr adjudicación proyecto 
+pedro_pazos
+1
+pendiente
+14/04/2017:12:00
+-
+*
+simple
+9
+Comprar parcela anexa
+pedro_pazos
+5
+pendiente
+-
+-
+*
+simple
+14
+Instalar nueva puerta en el garaje
+pedro_pazos
+9
+pendiente
+-
+5
+*
+simple
+15
+Mejorar rampa de acceso al garaje
+pedro_pazos
+9
+pendiente
+-
+5
+*
+simple
+16
+Colocar nuevas estanterías en el garaje
+pedro_pazos
+9
+pendiente
+-
+5
+*
+con_plazo
+4
+Realizar viaje a las Islas Cíes
+jose_lopez
+7
+pendiente
+07/08/2015:10:00
+-
+*
+simple
+3
+Subir al monte Galiñeiro
+jose_lopez
+7
+terminada
+-
+-
+*
+con_plazo
+1
+Eliminar goteras garaje
+pedro_pazos
+1
+terminada
+13/11/2014:20:00
+-
+*
+simple
+2
+Renovar instalación eléctrica
+pedro_pazos
+3
+terminada
+-
+1
+*
+simple
+4
+Pintar el garaje
+pedro_pazos
+3
+pendiente
+-
+1
+

@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <string.h>
+#include "funciones.c"
+
+
+
+
+int main() {
+
+  /* Tarea *inicio; */
+  char *iden;
+  Tarea *nuevatarea;
+
+  iden=portada();
+  nuevatarea=crear_tarea(iden);
+  guardar_tarea(nuevatarea);
+
+
+
+
+  /* inicio=cargar_tareas(); */
+
+
+
+
+  /* ver_tarea(inicio,iden); */
+
+
+  
+  return 0;
+}
